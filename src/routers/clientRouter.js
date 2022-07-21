@@ -2,8 +2,8 @@ import { Router } from "express";
 
 const clientRouter = Router();
 
-clientRouter.get("/clients")
-clientRouter.put("/clients")
-clientRouter.post("/clients")
+clientRouter.get("/customers")
+clientRouter.put("/customers")
+clientRouter.post("/customers")
 
 export default clientRouter;
