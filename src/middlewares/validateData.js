@@ -3,7 +3,6 @@ import rentalsSchema from "../database/models/rentalsSchema.js";
 import customersSchema from "../database/models/customersSchema.js";
 import categoriesSchema from "../database/models/categoriesSchema.js";
 import idSchema from "../database/models/idSchema.js";
-import validateAsync from "joi";
 
 const schema = {
   games: gamesSchema ,
@@ -14,10 +13,13 @@ const schema = {
 };
 
 export default async function validateEntry(req, res, next) {
-  console.log(res.locals.validationData);
   if(res.locals.needsValidation) {
     try {
       const response = await validate(res.locals.validationData, schema[res.locals.reqPath]);
+      if(response.hasOwnProperty('pricePerDay')) {
+        response.pricePerDay*=100;
+      }
+      console.log(response);
       res.locals.queryData = Object.values(response);
       next();
     } catch(err) {

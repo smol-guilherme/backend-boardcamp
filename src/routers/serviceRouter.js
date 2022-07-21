@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { createCategories, getCategories } from "../controllers/categoryControllers.js";
+import { createGames, getGames } from "../controllers/gameControllers.js";
 
 const serviceRouter = Router();
 
-serviceRouter.get("/games", (req, res) => res.status(200).send(res.locals.path))
-serviceRouter.post("/games")
+serviceRouter.get("/games", getGames)
+serviceRouter.post("/games", createGames)
 serviceRouter.get("/categories", getCategories)
 serviceRouter.post("/categories", createCategories)
 

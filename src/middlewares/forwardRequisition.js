@@ -36,9 +36,18 @@ export default function pathHandlerMiddleware(req, res, next) {
       validationFlag = validationHandler(req.params, req.body);
       if(validationFlag) {
         res.locals.needsValidation = validationFlag;
-
+        res.locals.validationData = req.body;
+        queryParams = `
+        INSERT INTO
+          games (name, image, "stockTotal", "categoryId", "pricePerDay") 
+        SELECT $1, $2, $3, $4, $5 
+        WHERE 
+          NOT EXISTS (SELECT name FROM games WHERE name ILIKE $1)
+        AND
+          EXISTS (SELECT id FROM categories WHERE id=$4);
+        `;
       } else {
-
+        queryParams = 'SELECT g.*, (SELECT name as "categoryName" FROM categories WHERE id=g."categoryId") FROM games AS g;';
       }
       break;
     case "categories":
@@ -46,9 +55,9 @@ export default function pathHandlerMiddleware(req, res, next) {
       if(validationFlag) {
         res.locals.needsValidation = validationFlag;
         res.locals.validationData = req.body;
-        queryParams = 'INSERT INTO categories (name) SELECT $1 WHERE NOT EXISTS (SELECT name FROM categories WHERE name=$1)';
+        queryParams = 'INSERT INTO categories (name) SELECT $1 WHERE NOT EXISTS (SELECT name FROM categories WHERE name ILIKE $1)';
       } else {
-        queryParams = 'SELECT name FROM categories ORDER BY id;';
+        queryParams = 'SELECT * FROM categories ORDER BY id;';
       }
       break;
     default:
