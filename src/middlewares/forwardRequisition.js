@@ -1,11 +1,13 @@
 import validationHandler from "../handlers/validationHandler.js";
 
 export default function pathHandlerMiddleware(req, res, next) {
-  res.locals.reqPath = req.path.replace(/^\//, "");
+  res.locals.reqPath = req.path.replaceAll(/\//g, "").replace(/[0-9]+/, "");
+  // const id = req.query.customerId;
+  // console.log(Object.keys(req.query));
   let queryParams;
   let validationFlag;
-  res.locals.needsValidation = false;
 
+  res.locals.needsValidation = false;
 
   switch (res.locals.reqPath) {
     case "health":
@@ -14,26 +16,37 @@ export default function pathHandlerMiddleware(req, res, next) {
     // PODE TER QUERY STRING
     case "rentals/metrics":
     case "rentals":
-      validationFlag = validationHandler(req.params, req.body);
+      console.log('inside rentals');
+      validationFlag = validationHandler(req.query, req.body);
       if(validationFlag) {
         res.locals.needsValidation = validationFlag;
 
       } else {
-
+        queryParams = 'SELECT * FROM rentals ORDER BY id;';
       }
       break;
     case "customers":
-      validationFlag = validationHandler(req.params, req.body);
+      console.log('bzz');
+      // console.log(req);
+      console.log(req.query, req.body, req.params);
+      validationFlag = validationHandler(req.query, req.body);
+      // console.log(validationFlag);
       if(validationFlag) {
         res.locals.needsValidation = validationFlag;
-
+        res.locals.validationData = req.body;
+        // if(Object.keys(params).length===0) {
+        //   res.locals.validationData.push({...req.query.customerId});
+        // }
+        console.log(res.locals.validationData);
+        console.log('into if');
+        queryParams = 'INSERT INTO customers (name, phone, cpf, birthday) SELECT $1, $2, $3, $4 WHERE NOT EXISTS (SELECT cpf FROM customers WHERE cpf=$3::VARCHAR)';
       } else {
-
+        queryParams = 'SELECT * FROM customers ORDER BY id;';
       }
       break;
     // NÃO TEM QUERY STRING
     case "games":
-      validationFlag = validationHandler(req.params, req.body);
+      validationFlag = validationHandler(req.query, req.body);
       if(validationFlag) {
         res.locals.needsValidation = validationFlag;
         res.locals.validationData = req.body;
@@ -51,7 +64,7 @@ export default function pathHandlerMiddleware(req, res, next) {
       }
       break;
     case "categories":
-      validationFlag = validationHandler(req.params, req.body);
+      validationFlag = validationHandler(req.query, req.body);
       if(validationFlag) {
         res.locals.needsValidation = validationFlag;
         res.locals.validationData = req.body;

@@ -13,16 +13,18 @@ const schema = {
 };
 
 export default async function validateEntry(req, res, next) {
+  // console.log(res.locals.validationData);
+  console.log(res.locals.reqPath);
   if(res.locals.needsValidation) {
     try {
       const response = await validate(res.locals.validationData, schema[res.locals.reqPath]);
       if(response.hasOwnProperty('pricePerDay')) {
         response.pricePerDay*=100;
       }
-      console.log(response);
       res.locals.queryData = Object.values(response);
       next();
     } catch(err) {
+      console.log(err);
       if(err.details[0].type === 'string.empty') {
         res.status(400).send(err.details[0].message);
         return;
