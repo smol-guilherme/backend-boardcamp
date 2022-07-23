@@ -12,7 +12,6 @@ export default function rentDate(req, res, next) {
     case "PUT":
       break;
   }
-  console.log(data);
   res.locals.validationData = {...data};
   res.locals.queryData = Object.values(data)
   next();

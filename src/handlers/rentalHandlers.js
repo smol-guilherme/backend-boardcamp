@@ -70,32 +70,50 @@ function populateQuery(operator) {
       break;
     case 1:
       queryData = `
-        INSERT INTO 
-          rentals 
-          (
-            "customerId",
-            "gameId",
-            "daysRented",
-            "rentDate",
-            "returnDate",
-            "originalPrice",
-            "delayFee"
-          )
-          VALUES 
-          (
-            $1, 
-            $2, 
-            $3, 
-            $4, 
-            $5,
-            $6 * (SELECT "pricePerDay" FROM games WHERE id=$2),
-            $7
-          )
-      `;
-      //   WHERE
-      //   NOT EXISTS (SELECT name FROM games WHERE name ILIKE $1)
-      // AND
-      //   EXISTS (SELECT id FROM categories WHERE id=$4);
+      INSERT INTO 
+        rentals 
+        (
+          "customerId",
+          "gameId",
+          "daysRented",
+          "rentDate",
+          "returnDate",
+          "originalPrice",
+          "delayFee"
+        )
+        SELECT 
+          $1, 
+          $2, 
+          $3, 
+          $4, 
+          $5::DATE,
+          $6 * (SELECT "pricePerDay" FROM games WHERE id=$2),
+          $7::INTEGER
+        WHERE
+          EXISTS (SELECT id FROM games WHERE id=$2)
+        AND
+          EXISTS (SELECT id FROM customers WHERE id=$1)
+        AND
+          (SELECT
+            (
+              SELECT 
+                COUNT(*) 
+              FROM 
+                rentals 
+              WHERE 
+                "returnDate" 
+                IS NULL
+              AND
+                "gameId"=$2 
+            ) < (
+              SELECT 
+                "stockTotal"
+              FROM
+                games
+              WHERE
+                id=$2
+            )
+          );`;
       break;
     case 2:
       break;

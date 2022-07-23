@@ -8,11 +8,12 @@ export async function getRentals(req, res) {
 }
 
 export async function createRentals(req, res) {
-  console.log(res.locals.queryParams);
-  console.log(res.locals.queryData);
+  // console.log(res.locals.queryParams);
+  // console.log(res.locals.queryData);
   const { rowCount } = await connection.query(res.locals.queryParams, res.locals.queryData);
+  console.log(rowCount);
   if (rowCount===0) {
-    res.status(409).send();
+    res.status(400).send();
     return;
   }
   res.status(201).send();
