@@ -14,7 +14,6 @@ const schema = {
 
 export default async function validateEntry(req, res, next) {
   // console.log(res.locals.validationData);
-  console.log(res.locals.reqPath);
   if(res.locals.needsValidation) {
     try {
       const response = await validate(res.locals.validationData, schema[res.locals.reqPath]);
