@@ -1,14 +1,14 @@
 export default function rentDate(req, res, next) {
-  // console.log(res.locals.validationData);
   const data = res.locals.validationData;
-  switch(req.method) {
-    case "POST":
+  switch(res.locals.reqPath) {
+    case "rentals":
       data.rentDate = new Date().toISOString();
       data.returnDate = null;
       data.originalPrice = parseInt(data.daysRented);
       data.delayFee = null;
       break;
-    case "PUT":
+    case "rentals return":
+      data.returnDate = new Date().toISOString();
       break;
   }
   res.locals.validationData = {...data};

@@ -1,13 +1,13 @@
 import validationHandler from "./validationHandler.js";
 
-export default function handleRentalData(dataArray) {
+export default function handleRentalData(dataArray, method) {
   let queryString = "";
   const response = validationHandler(dataArray);
   const flag = response.flag;
   const opIndex = response.indexArray;
   if (opIndex.length > 0) {
     for (const index of opIndex) {
-      queryString += populateQuery(index);
+      queryString += populateQuery(index, method);
     }
   } else {
     queryString = `
@@ -62,7 +62,7 @@ export default function handleRentalData(dataArray) {
   return { queryString, flag, opIndex };
 }
 
-function populateQuery(operator) {
+function populateQuery(operator, method) {
   let queryData;
   switch (operator) {
     case 0:
@@ -165,7 +165,52 @@ function populateQuery(operator) {
           );`;
       break;
     case 2:
+      if(method==='POST') {
+        queryData = `
+        UPDATE 
+          rentals 
+        SET
+          "returnDate"=$2,
+          "delayFee"=
+            CASE
+              WHEN (
+                "returnDate"<"rentDate"+"daysRented"
+              )
+              THEN
+                (
+                  SELECT 
+                    "pricePerDay"
+                  FROM 
+                    games 
+                  WHERE
+                    id="gameId"
+                ) * (
+                  "returnDate"-"rentDate"+"daysRented"
+                )
+              ELSE
+                NULL
+            END
+        WHERE
+          EXISTS (SELECT id FROM rentals WHERE id=$1)
+        AND
+          id=$1
+        AND
+          "returnDate" IS NULL
+        RETURNING "returnDate", "delayFee"
+        ;`;
+      } else {
+        queryData = `
+          DELETE 
+            FROM rentals
+          WHERE 
+            id=$1
+          AND
+            "returnDate" IS NULL
+        ;`
+      }
       break;
   }
   return queryData;
 }
+
+// EXISTS (SELECT id FROM rentals WHERE id=$1)

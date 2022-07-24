@@ -30,13 +30,11 @@ export default async function validateEntry(req, res, next) {
         queryDataArray = Object.values(response);
       }
       res.locals.queryData = queryDataArray;
-      console.log("next");
       next();
     } else {
       next();
     }
   } catch (err) {
-    console.log(err);
     if (err.details[0].type === "string.empty" || err.details[0].type === "date.base") {
       res.status(400).send(err.details[0].message);
       return;

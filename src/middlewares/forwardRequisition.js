@@ -3,13 +3,14 @@ import validationDataHandler from "../handlers/validateDataHandler.js";
 import validationHandler from "../handlers/validationHandler.js";
 
 export default function pathHandlerMiddleware(req, res, next) {
-  res.locals.reqPath = req.path.replaceAll(/\//g, "").replace(/[0-9]+/, "");
+  res.locals.reqPath = req.path.replaceAll(/\//g, " ").replace(/[0-9]+/, "").replaceAll(/\B\s/g,"").trim();
   res.locals.reqParams = req.path.replaceAll(/\D+/g, "")
   let queryParams;
   let validationFlag;
   let response;
   let indexes;
   let reqParams;
+
   
   if(res.locals.reqParams.length !== 0) {
     reqParams = { customerId: res.locals.reqParams }
@@ -19,14 +20,14 @@ export default function pathHandlerMiddleware(req, res, next) {
   const reqDataArray = [req.query, req.body, reqParams];
   res.locals.needsValidation = false;
 
+
   switch (res.locals.reqPath) {
     case "health":
       res.status(200).send("OK");
       return;
-    case "rentals/metrics":
+    case "rentals return":
     case "rentals":
-      console.log('in rentals case with', reqDataArray);
-      response = handleRentalData(reqDataArray);
+      response = handleRentalData(reqDataArray, req.method);
       queryParams = response.queryString;
       validationFlag = response.flag;
       res.locals.needsValidation = validationFlag;
@@ -40,7 +41,6 @@ export default function pathHandlerMiddleware(req, res, next) {
       }
       break;
     case "customers":
-      // console.log('in customers case with', reqDataArray);
       response = validationHandler(reqDataArray);
       validationFlag = response.flag;
       indexes = response.indexArray;

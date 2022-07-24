@@ -1,7 +1,6 @@
 import connection from "../database/postgresdb.js";
 
 export async function getCustomers(req, res) {
-  console.log('im getcustomers');
   const { rows: response } = await connection.query(res.locals.queryParams, res.locals.queryData);
   if(res.locals.queryData !== undefined) {
     res.status(200).send(response[0]);
