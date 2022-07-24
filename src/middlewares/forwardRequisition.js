@@ -17,7 +17,6 @@ export default function pathHandlerMiddleware(req, res, next) {
     reqParams = req.params;
   }
   const reqDataArray = [req.query, req.body, reqParams];
-  // console.log(reqDataArray);
   res.locals.needsValidation = false;
 
   switch (res.locals.reqPath) {
@@ -41,13 +40,13 @@ export default function pathHandlerMiddleware(req, res, next) {
       }
       break;
     case "customers":
-      console.log('in customers case with', reqDataArray);
+      // console.log('in customers case with', reqDataArray);
       response = validationHandler(reqDataArray);
       validationFlag = response.flag;
       indexes = response.indexArray;
       if (validationFlag) {
         res.locals.needsValidation = validationFlag;
-        response = validationDataHandler(indexes, reqDataArray)
+        response = validationDataHandler(indexes, reqDataArray, req.method)
         queryParams = response.queryString;
         res.locals.validationData = response.data;
       } else {

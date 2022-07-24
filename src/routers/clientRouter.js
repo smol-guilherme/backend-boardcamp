@@ -4,7 +4,7 @@ import { createCustomers, editCustomers, getCustomers } from "../controllers/cus
 const clientRouter = Router();
 
 clientRouter.get("/", getCustomers)
-clientRouter.put("/", editCustomers)
+clientRouter.put("/:clientId", editCustomers)
 clientRouter.post("/", createCustomers)
 
 export default clientRouter;
