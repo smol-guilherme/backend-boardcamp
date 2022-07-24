@@ -15,8 +15,9 @@ app.use(cors())
 app.use(json())
 app.use(pathHandlerMiddleware);
 app.use(validateEntry);
+app.use("/customers", clientRouter)
+app.use("/customers/:customerId", clientRouter)
 app.use(serviceRouter)
-app.use(clientRouter)
 app.use(rentRouter)
 
 app.listen(PORT || 4001, () => console.log(`Server listening to PORT ${PORT} @${Date().toString()}`));

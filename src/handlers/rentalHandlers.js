@@ -1,46 +1,65 @@
 import validationHandler from "./validationHandler.js";
 
-export default function handleRentalData(query, body, params) {
+export default function handleRentalData(dataArray) {
   let queryString = "";
-  const response = validationHandler(query, body, params);
-  const opIndex = response.indexArray;
+  const response = validationHandler(dataArray);
   const flag = response.flag;
+  const opIndex = response.indexArray;
   if (opIndex.length > 0) {
     for (const index of opIndex) {
       queryString += populateQuery(index);
     }
   } else {
-    flag = opIndex;
-    // queryString=`
-    //   SELECT
-    //     r.*,
-    //     (
-    //       SELECT (id, name)
-    //       FROM customers
-    //     ) AS customer,
-    //     (
-    //       SELECT
-    //         (g.id, g.name, g."categoryId"),
-    //         (
-    //           SELECT name AS "categoryName"
-    //           FROM categories
-    //         )
-    //       FROM games AS g
-    //     )
-    //     FROM rentals AS r;
-    // `;
     queryString = `
-      SELECT
+      SELECT 
         r.*,
         (
-          SELECT name
-          FROM customers 
+          SELECT
+            json_build_object
+              (
+                'id', id, 
+                'name', name
+              ) as customer
+          FROM 
+            ( 
+              SELECT 
+                c.id, c.name 
+              FROM 
+                customers AS c 
+              WHERE c.id=r."customerId" 
+            ) d
+        ),
+        (
+          SELECT
+            json_build_object
+              (
+                'id', id, 
+                'name', name,
+                'categoryId', "categoryId", 
+                'categoryName', 
+                (
+                  SELECT
+                    name
+                  FROM
+                    categories
+                  WHERE
+                    id="categoryId"
+                )
+              ) AS game
+          FROM 
+            ( 
+              SELECT 
+                v.id, v.name, v."categoryId"
+              FROM 
+                games AS v 
+              WHERE v.id=r."gameId" 
+            ) g
         )
-      FROM rentals
-      AS r;
+      FROM 
+        rentals AS r;
     `;
   }
-  return { queryString, flag };
+  return { queryString, flag, opIndex };
 }
 
 function populateQuery(operator) {
@@ -48,24 +67,54 @@ function populateQuery(operator) {
   switch (operator) {
     case 0:
       queryData = `
-        SELECT 
-          r.*,
-          (
-            SELECT (id, name) 
-            FROM customers 
-            WHERE id=$1
-          ) AS customer,
-          (
-            SELECT 
-              (g.id, g.name, g."categoryId"),
+      SELECT 
+        r.*,
+        (
+          SELECT
+            json_build_object
               (
-                SELECT name AS "categoryName"
-                FROM categories 
-                WHERE id=g."categoryId"
-              )
-            FROM games AS g
-          )
-          FROM rentals AS r;
+                'id', id, 
+                'name', name
+              ) as customer
+          FROM 
+            ( 
+              SELECT 
+                c.id, c.name 
+              FROM 
+                customers AS c 
+              WHERE c.id=r."customerId" 
+            ) d
+        ),
+        (
+          SELECT
+            json_build_object
+              (
+                'id', id, 
+                'name', name,
+                'categoryId', "categoryId", 
+                'categoryName', 
+                (
+                  SELECT
+                    name
+                  FROM
+                    categories
+                  WHERE
+                    id="categoryId"
+                )
+              ) AS game
+          FROM 
+            ( 
+              SELECT 
+                v.id, v.name, v."categoryId"
+              FROM 
+                games AS v 
+              WHERE v.id=r."gameId" 
+            ) g
+        )
+      FROM 
+        rentals AS r
+      WHERE
+        "customerId"=$1;
       `;
       break;
     case 1:

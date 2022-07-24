@@ -13,14 +13,25 @@ const schema = {
 };
 
 export default async function validateEntry(req, res, next) {
-  // console.log(res.locals.validationData);
+  const hasIdRegex = /[0-9]$/;
+  const validationData = res.locals.validationData || {};
+  let validationSchema;
+  console.log(req.path, 'before test with', validationData, 'as params');
+  // console.log(res.locals.needsValidation, 'after true');
+  if(Object.keys(validationData).length === 1) {
+    console.log('Im Id schema ');
+    validationSchema = schema.id
+  } else {
+    validationSchema = schema[res.locals.reqPath];
+  }
   if(res.locals.needsValidation) {
     try {
-      const response = await validate(res.locals.validationData, schema[res.locals.reqPath]);
+      const response = await validate(validationData, validationSchema);
       if(response.hasOwnProperty('pricePerDay')) {
         response.pricePerDay*=100;
       }
       res.locals.queryData = Object.values(response);
+      console.log('next');
       next();
     } catch(err) {
       console.log(err);

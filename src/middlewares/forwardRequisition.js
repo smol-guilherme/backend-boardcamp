@@ -1,59 +1,62 @@
 import handleRentalData from "../handlers/rentalHandlers.js";
+import validationDataHandler from "../handlers/validateDataHandler.js";
 import validationHandler from "../handlers/validationHandler.js";
 
 export default function pathHandlerMiddleware(req, res, next) {
   res.locals.reqPath = req.path.replaceAll(/\//g, "").replace(/[0-9]+/, "");
+  res.locals.reqParams = req.path.replaceAll(/\D+/g, "")
   let queryParams;
   let validationFlag;
-  // console.log(req.query, req.body, req.params);
-
+  let response;
+  let indexes;
+  let reqParams;
+  
+  if(res.locals.reqParams.length !== 0) {
+    reqParams = { customerId: res.locals.reqParams }
+  } else {
+    reqParams = req.params;
+  }
+  const reqDataArray = [req.query, req.body, reqParams];
+  // console.log(reqDataArray);
   res.locals.needsValidation = false;
 
   switch (res.locals.reqPath) {
     case "health":
       res.status(200).send("OK");
       return;
-    // PODE TER QUERY STRING
     case "rentals/metrics":
     case "rentals":
-      const response = handleRentalData(req.query, req.body, req.params);
+      console.log('in rentals case with', reqDataArray);
+      response = handleRentalData(reqDataArray);
       queryParams = response.queryString;
       validationFlag = response.flag;
       res.locals.needsValidation = validationFlag;
+      indexes = response.opIndex;
       if(validationFlag) {
-        res.locals.validationData = req.body;
+        if(indexes.length > 0 && indexes.length > 1) {
+          res.locals.validationData = validationDataHandler(indexes, reqDataArray);
+        } else {
+          res.locals.validationData = reqDataArray[indexes[0]];
+        }
       }
       break;
     case "customers":
-      validationFlag = validationHandler(req.query, req.body, req.params);
+      console.log('in customers case with', reqDataArray);
+      response = validationHandler(reqDataArray);
+      validationFlag = response.flag;
+      indexes = response.indexArray;
       if (validationFlag) {
         res.locals.needsValidation = validationFlag;
-        res.locals.validationData = req.body;
-        queryParams = `
-        INSERT INTO 
-          customers 
-          (
-            name, 
-            phone, 
-            cpf, 
-            birthday
-          ) 
-          SELECT $1, $2, $3, $4 
-          WHERE 
-            NOT EXISTS 
-            (
-              SELECT cpf 
-              FROM customers 
-              WHERE cpf=$3::VARCHAR
-            )`;
+        response = validationDataHandler(indexes, reqDataArray)
+        queryParams = response.queryString;
+        res.locals.validationData = response.data;
       } else {
         queryParams = `SELECT * FROM customers ORDER BY id;`;
       }
       break;
-    // NÃO TEM QUERY STRING
     case "games":
-      validationFlag = validationHandler(req.query, req.body, req.params);
-      // console.log(validationFlag);
+      response = validationHandler(reqDataArray);
+      validationFlag = response.flag;
       if (validationFlag) {
         res.locals.needsValidation = validationFlag;
         res.locals.validationData = req.body;
@@ -79,8 +82,8 @@ export default function pathHandlerMiddleware(req, res, next) {
       }
       break;
     case "categories":
-      validationFlag = validationHandler(req.query, req.body, req.params);
-      // console.log(validationFlag);
+      response = validationHandler(reqDataArray);
+      validationFlag = response.flag;
       if (validationFlag) {
         res.locals.needsValidation = validationFlag;
         res.locals.validationData = req.body;

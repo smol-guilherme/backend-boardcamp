@@ -3,9 +3,8 @@ import { createCustomers, editCustomers, getCustomers } from "../controllers/cus
 
 const clientRouter = Router();
 
-clientRouter.get("/customers/:clientId", getCustomers)
-clientRouter.get("/customers", getCustomers)
-clientRouter.put("/customers", editCustomers)
-clientRouter.post("/customers", createCustomers)
+clientRouter.get("/", getCustomers)
+clientRouter.put("/", editCustomers)
+clientRouter.post("/", createCustomers)
 
 export default clientRouter;

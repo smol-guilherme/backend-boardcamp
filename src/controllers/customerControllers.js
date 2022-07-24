@@ -1,8 +1,16 @@
 import connection from "../database/postgresdb.js";
 
 export async function getCustomers(req, res) {
-  const { rows: response } = await connection.query(res.locals.queryParams);
-  res.status(200).send(response);
+  console.log('im getcustomers');
+  console.log(res.locals.queryParams);
+  console.log(res.locals.queryData);
+  const { rows: response } = await connection.query(res.locals.queryParams, res.locals.queryData);
+  console.log(response);
+  if(res.locals.queryData !== undefined) {
+    res.status(200).send(response[0]);
+  } else {
+    res.status(200).send(response);
+  }
   return;
 }
 

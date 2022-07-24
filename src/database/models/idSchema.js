@@ -1,7 +1,7 @@
 import Joi from "joi";
 
 const queryIdSchema = Joi.object({
-  name: Joi.number().precision(0).required()
+  customerId: Joi.string().pattern(/[0-9]{1,}/).required()
 });
 
 export default queryIdSchema;

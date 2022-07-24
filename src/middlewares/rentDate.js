@@ -1,6 +1,5 @@
 export default function rentDate(req, res, next) {
   // console.log(res.locals.validationData);
-  // console.log(req.method);
   const data = res.locals.validationData;
   switch(req.method) {
     case "POST":
