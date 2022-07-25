@@ -56,7 +56,8 @@ export default function handleRentalData(dataArray, method) {
             ) g
         )
       FROM 
-        rentals AS r;
+        rentals AS r
+      ORDER BY id DESC;
     `;
   }
   return { queryString, flag, opIndex };
@@ -114,8 +115,8 @@ function populateQuery(operator, method) {
       FROM 
         rentals AS r
       WHERE
-        "customerId"=$1;
-      `;
+        "customerId"=$1
+      ;`;
       break;
     case 1:
       queryData = `
@@ -165,52 +166,51 @@ function populateQuery(operator, method) {
           );`;
       break;
     case 2:
-      if(method==='POST') {
+      if (method === "POST") {
         queryData = `
+        WITH entry_found AS 
+        (
+          SELECT 
+            LAST_VALUE("returnDate") 
+              OVER (ORDER BY "returnDate") last_value
+          FROM rentals 
+          WHERE id=$1
+        )
         UPDATE 
-          rentals 
+          rentals
         SET
-          "returnDate"=$2,
+          "returnDate"=
+            CASE
+              WHEN "returnDate" IS NULL
+                THEN $2::date
+                ELSE "returnDate"
+            END,
           "delayFee"=
             CASE
-              WHEN (
-                "returnDate"<"rentDate"+"daysRented"
-              )
+              WHEN ("returnDate">"rentDate"+"daysRented")
               THEN
                 (
-                  SELECT 
-                    "pricePerDay"
-                  FROM 
-                    games 
-                  WHERE
-                    id="gameId"
-                ) * (
-                  "returnDate"-"rentDate"+"daysRented"
-                )
+                  SELECT "pricePerDay"
+                  FROM games 
+                  WHERE id="gameId"
+                ) * ("returnDate"-"rentDate"-"daysRented")
               ELSE
                 NULL
             END
-        WHERE
-          EXISTS (SELECT id FROM rentals WHERE id=$1)
-        AND
-          id=$1
-        AND
-          "returnDate" IS NULL
-        RETURNING "returnDate", "delayFee"
-        ;`;
+        FROM entry_found
+        WHERE id=$1
+        RETURNING "returnDate", last_value;
+        `
       } else {
         queryData = `
-          DELETE 
-            FROM rentals
-          WHERE 
-            id=$1
-          AND
-            "returnDate" IS NULL
-        ;`
+        DELETE 
+          FROM rentals 
+        USING entry_found
+        WHERE id=$1 
+        AND "returnDate" IS NULL
+        ;`;
       }
       break;
   }
   return queryData;
 }
-
-// EXISTS (SELECT id FROM rentals WHERE id=$1)

@@ -17,8 +17,12 @@ export async function createRentals(req, res) {
 }
 
 export async function updateRentals(req, res) {
-  const { rowCount } = await connection.query(res.locals.queryParams, res.locals.queryData);
-  if (rowCount===0) {
+  const { rows: response } = await connection.query(res.locals.queryParams, res.locals.queryData);
+  if (response.length===0) {
+    res.status(404).send();
+    return;
+  }
+  if(response[0].returnDate===response[0].last_value) {
     res.status(400).send();
     return;
   }
@@ -32,9 +36,6 @@ export async function deleteRentals(req, res) {
     res.status(400).send();
     return;
   }
-  res.status(201).send();
+  res.status(200).send();
   return;
 }
-
-
-// `SELECT r.*,(SELECT json_build_object('id', id, 'name', name) as customer FROM (SELECT c.id, c.name FROM customers AS c WHERE c.id=r."customerId" ) d),(SELECT json_build_object( 'id', id, 'name', name, 'categoryId', "categoryId", 'categoryName', ( SELECT name FROM categories WHERE id="categoryId" ) ) AS game FROM (SELECT v.id, v.nSELECT r.*,(SELECT json_build_object('id', id, 'name', name) as customer FROM (SELECT c.id, c.name FROM customers AS c WHERE c.id=r."customerId" ) d),(SELECT json_build_object( 'id', id, 'name', name, 'categoryId', "categoryId", 'categoryName', ( SELECT name FROM categories WHERE id="categoryId" ) ) AS game FROM (SELECT v.id, v.name, v."categoryId" FROM games AS v WHERE v.id=r."gameId" ) g ) FROM rentals AS r WHERE id=1;
